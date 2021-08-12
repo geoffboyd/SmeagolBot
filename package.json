@@ -1,0 +1,17 @@
+{
+  "name": "testbot",
+  "version": "1.0.0",
+  "description": "Telegram test bot",
+  "main": "telegram-bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^7.4.3",
+    "markovchain": "^1.0.2",
+    "puppeteer-core": "^10.2.0",
+    "telegraf": "^4.4.1"
+  }
+}
