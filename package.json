@@ -1,17 +1,24 @@
 {
-  "name": "testbot",
-  "version": "1.0.0",
-  "description": "Telegram test bot",
-  "main": "telegram-bot.js",
+  "name": "botster",
+  "version": "0.4.0",
+  "description": "A chatbot for Discord, Twitch, and IRC",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "boydster",
+  "license": "MIT",
   "dependencies": {
-    "better-sqlite3": "^7.4.3",
+    "@iamtraction/google-translate": "^1.1.2",
+    "bad-words": "^3.0.4",
+    "better-sqlite3": "^7.1.1",
+    "cron": "^1.8.2",
+    "discord.js": "^12.4.1",
+    "irc": "^0.5.2",
     "markovchain": "^1.0.2",
     "puppeteer-core": "^10.2.0",
-    "telegraf": "^4.4.1"
+    "telegraf": "^4.4.1",
+    "tmi.js": "^1.5.0",
+    "twit": "^2.2.11"
   }
 }
