@@ -143,14 +143,8 @@ bot.command('roll', ctx => {
   	}, 2500)
 })
 
-// Let's do some important stuff when we see a message has been posted. 
-bot.on('message', ctx => {
-  if(ctx.message.from.is_bot){
-    console.log('Message from bot detected, ignoring it... ' + ctx.message.from)
-    return;
-  }
-  console.log('Message from a user detected');
-  console.log(ctx.message.from.first_name + ": " + ctx.message.text);
+// Let's do some important stuff when we see a text-type message has been posted. 
+bot.on('text', ctx => {
   let badStrings = 
   	[
   	'i-58xPAFjGgwOTZi',
@@ -257,6 +251,5 @@ bot.on('message', ctx => {
     }, 2500);  
   }
 });
-
 
 bot.launch();
