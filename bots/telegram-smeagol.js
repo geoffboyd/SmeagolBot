@@ -82,7 +82,8 @@ bot.telegram.sendMessage(ctx.chat.id, 'I will fetch the precious, please wait. G
 bot.command('contract', ctx => {
 	bot.telegram.sendChatAction(ctx.chat.id, action='typing');
 	setTimeout(function(){
-		bot.telegram.sendMessage(ctx.chat.id, '0x8d46739bb6ad55ae438d921cb130afb27e74b46e', {})
+		bot.telegram.sendMessage(ctx.chat.id, '0x8d46739bb6ad55ae438d921cb130afb27e74b46e', {});
+    bot.telegram.sendPhoto(ctx.chat.id, 'https://i.ibb.co/m9dHttm/Screen-Shot-2021-10-06-at-10-38-51-PM.png');
 	}, 2000);
 })
 
