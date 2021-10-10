@@ -2,6 +2,8 @@ const Telegraf = require('telegraf').Telegraf;
 const { token } = require('../config/telegram.json');
 const bot = new Telegraf(token);
 const Filter = require('bad-words');
+const MarkovChain = require('markovchain');
+const fs = require('fs');
 var filter = new Filter();
 
 // These items add database functionality and the ability to get website screenshots
@@ -11,10 +13,33 @@ const db = new SQLite('../userinputs.sqlite');
 const puppeteer = require('puppeteer-core');
 */
 
-// Markov generator
-var MarkovChain = require('markovchain'),
-fs = require('fs'),
-wordSalad = new MarkovChain(fs.readFileSync('./telegramHistory.txt', 'utf8'))
+// ------- Initiate variables and a shuffle function for our Spam Blocker ----------
+
+var smeagolBlocker;
+var newMember;
+var newMemberName;
+
+const { Keyboard, Key } = require('telegram-keyboard')
+
+bot.telegram.getMe().then((botInfo) => {
+  bot.options.username = botInfo.username
+})
+
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
+// --------- End of new code for spam blocker -----------
 
 bot.telegram.getMe().then((botInfo) => {
 	bot.options.username = botInfo.username
@@ -25,57 +50,57 @@ var latestCronMessage;
 var CronJob = require('cron').CronJob;
 var job = new CronJob('0 0 */4 * * *', function() {
 	if (latestCronMessage) { bot.telegram.deleteMessage(-1001276103478, latestCronMessage)};
-	if (!latestCronMessage & fs.existsSync(`lastCronMessage.txt`)) {
+  	if (!latestCronMessage & fs.existsSync(`lastCronMessage.txt`)) {
 		fs.readFile(`lastCronMessage.txt`, `utf8`, function (err, data) {
-			if (err) throw err;
-			latestCronMessage = data;
-			bot.telegram.deleteMessage(-1001276103478, latestCronMessage);
-			console.log(latestCronMessage);
+	  	if (err) throw err;
+	  	latestCronMessage = data;
+	  	bot.telegram.deleteMessage(-1001276103478, latestCronMessage);
+	  	console.log(latestCronMessage);
 		})
-	}
+  	}
 	bot.telegram.sendMessage(-1001276103478, '<b>Daily tasks to help JRR grow:</b>\n\n🧙🏼‍♂️https://gemhunters.net/coin/jrr-token/ Vote once per day\n\n‍🧝🏽‍♂️https://coinmooner.com/coin/2406 Vote once per day\n\n🧝🏼‍♂️https://tokenhunter.co/coin/jrr-token/ Vote once per day\n\n🧝https://coinsniper.net/coin/11747 Vote once per day\n\n🧝🏻‍♀️https://www.rugfreecoins.com/details/2975 Vote once per day\n\n💲Search for JRR Token on Google a couple times per day: https://www.google.com/search?q=jrr+token+crypto \n\n🤑Visit the Dextools page a few times per day https://www.dextools.io/app/pancakeswap/pair-explorer/0xf2e2e720fa9930b26cd38228eb352d748922aa53 (the first time there click on the star)\n\n', {parse_mode: 'HTML'}).then(({ message_id }) => {
-		latestCronMessage = message_id;
+    	latestCronMessage = message_id;
 		fs.writeFile(`lastCronMessage.txt`, `${message_id}`, function (err) {
 			if (err) throw err;
 		})
-	});
+  	});
 }, null, true, 'America/New_York');
 job.start();
 
 // Let's run through the commands
 bot.command('start', ctx => {
-	console.log(ctx.from)
-	bot.telegram.sendChatAction(ctx.chat.id, action="typing");
-	setTimeout(function(){
-		bot.telegram.sendMessage(ctx.chat.id, 'Smeagol is already running, master. Smeagol is a good bot. GOLLUM GOLLUM', {})
-	}, 2500);
+    console.log(ctx.from)
+    bot.telegram.sendChatAction(ctx.chat.id, action="typing");
+    setTimeout(function(){
+      bot.telegram.sendMessage(ctx.chat.id, 'Smeagol is already running, master. Smeagol is a good bot. GOLLUM GOLLUM', {})
+    }, 2500);
 })
 
 bot.command('chart', ctx => {
 	bot.telegram.sendChatAction(ctx.chat.id, action='typing');
 	setTimeout(function(){
-		bot.telegram.sendMessage(ctx.chat.id, 'https://www.dextools.io/app/pancakeswap/pair-explorer/0xf2e2e720fa9930b26cd38228eb352d748922aa53', {})
+    	bot.telegram.sendMessage(ctx.chat.id, 'https://www.dextools.io/app/pancakeswap/pair-explorer/0xf2e2e720fa9930b26cd38228eb352d748922aa53', {})
 	}, 2000);
 })
 
 // This version of the chart command is great when the chart looks good. It's great always, but people like it less when the chart doesn't look sexy.
 /*
 bot.command('chart', ctx => {
-(async () => {
-const browser = await puppeteer.launch({
-headless: true,
-executablePath: '/usr/bin/chromium-browser',
-args: ['--no-sandbox', '--disable-setuid-sandbox', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36']
-});
-const page = await browser.newPage();
-await page.setViewport({width: 1920, height: 1080});
-await page.goto('https://poocoin.app/tokens/0x8d46739bb6ad55ae438d921cb130afb27e74b46e', {waitUntil: 'networkidle3',});
-await page.screenshot({ path: 'poochartJRR.png' });
-await browser.close();
-await bot.telegram.sendPhoto(ctx.chat.id, {source: './poochartJRR.png'});
-})();
-bot.telegram.sendMessage(ctx.chat.id, 'I will fetch the precious, please wait. GOLLUM GOLLUM', {
-})
+  (async () => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36']
+    });
+    const page = await browser.newPage();
+    await page.setViewport({width: 1920, height: 1080});
+    await page.goto('https://poocoin.app/tokens/0x8d46739bb6ad55ae438d921cb130afb27e74b46e', {waitUntil: 'networkidle3',});
+    await page.screenshot({ path: 'poochartJRR.png' });
+    await browser.close();
+    await bot.telegram.sendPhoto(ctx.chat.id, {source: './poochartJRR.png'});
+  })();
+    bot.telegram.sendMessage(ctx.chat.id, 'I will fetch the precious, please wait. GOLLUM GOLLUM', {
+    })
 })
 */
 
@@ -97,7 +122,7 @@ bot.command('buy', ctx => {
 bot.command('website', ctx => {
 	bot.telegram.sendChatAction(ctx.chat.id, action='typing');
 	setTimeout(function(){
-		bot.telegram.sendMessage(ctx.chat.id, 'https://www.thetokenofpower.com', {})
+	    bot.telegram.sendMessage(ctx.chat.id, 'https://www.thetokenofpower.com', {})
 	}, 2000);
 })
 
@@ -128,128 +153,167 @@ bot.command('roll', ctx => {
 	if (args[1].toString().toLowerCase().includes('d')){
 		let diceInfo = args[1].split('d');
 		diceQuantity = Math.abs(diceInfo[0]);
-		diceSides = Math.abs(diceInfo[1]);
-		if (isNaN(diceQuantity) || isNaN(diceSides)){
-			return bot.telegram.sendMessage(ctx.chat.id, 'Usage: /roll [number of sides on die] (or "d" notation, like 3d12)')
-		}
-	} else {
-		let diceSides = args[1];
-	}
-	for (let i = 0; i < diceQuantity; i++) {
-		roll.push(Math.ceil(Math.random()*Math.abs(Math.floor(diceSides))));
-	}
-	roll = roll.join(', ');
-	setTimeout(function(){
-		bot.telegram.sendMessage(ctx.chat.id, `You rolled: ${roll}.`);
-	}, 2500)
+    	diceSides = Math.abs(diceInfo[1]);
+    	if (isNaN(diceQuantity) || isNaN(diceSides)){
+    		return bot.telegram.sendMessage(ctx.chat.id, 'Usage: /roll [number of sides on die] (or "d" notation, like 3d12)')
+    	}
+  	} else {
+    	let diceSides = args[1];
+  	}
+  	for (let i = 0; i < diceQuantity; i++) {
+      	roll.push(Math.ceil(Math.random()*Math.abs(Math.floor(diceSides))));
+  	}
+  	roll = roll.join(', ');
+  	setTimeout(function(){
+  		bot.telegram.sendMessage(ctx.chat.id, `You rolled: ${roll}.`);
+  	}, 2500)
 })
 
-// Let's do some important stuff when we see a text-type message has been posted.
+// Let's do some important stuff when we see a message has been posted.
 bot.on('text', ctx => {
-	let badStrings =
-	[
-		'i-58xPAFjGgwOTZi',
-		'kT5FAKgncmQ1NGMy',
-		'i-58xPAFjGgwOTZi',
-		'honeypotscan.com',
-		'THE FIRST MOBILE APPLICATION FOR CHECKING SMART CONTRACTS',
-		'✅HONEYPOT SCAN ($HPST)',
-		'🚀LAUNCH ON PANCAKESWAP ON OCTOBER 5',
-		'Time for our daily activity',
-		'It\'s time for our daily task',
-		'Our coin is listed on coindiscovery .app',
-		'Please, guys, make a vote for JRRToken',
-		'🔥 TIME TO VOTE 🔥',
-		'JRR Token is listed on Coin Scout!',
-	]
+  let badStrings =
+  	[
+  	'i-58xPAFjGgwOTZi',
+  	'kT5FAKgncmQ1NGMy',
+  	'i-58xPAFjGgwOTZi',
+  	'honeypotscan.com',
+  	'THE FIRST MOBILE APPLICATION FOR CHECKING SMART CONTRACTS',
+  	'✅HONEYPOT SCAN',
+  	'🚀LAUNCH ON PANCAKESWAP ON OCTOBER 5',
+  	'Time for our daily activity',
+  	'It\'s time for our daily task',
+  	'Our coin is listed on coindiscovery .app',
+  	'Please, guys, make a vote for JRRToken',
+  	'🔥 TIME TO VOTE 🔥',
+  	'JRR Token is listed on Coin Scout!',
+  	'⚠️73% OF TOKENS ARE SCAMMERS!⚠️',
+  	'xz_yFACnFcdmNDMy',
+		'Let\'s vote guys! A legit website with live price, market cap, and chart!',
+		'Perfect for investors to research projects!'
+  	]
 
-	for (let j = 0; j < badStrings.length; j++) {
-		badStrings[j] = badStrings[j].toLowerCase();
-		if (ctx.message.text.toString().toLowerCase().includes(badStrings[j])) {
-			console.log(`Match found: ${badStrings[j]}`);
-			let gifArray =
-			[
-				'https://tenor.com/view/mad-argh-angry-rage-smeagol-gif-3556295',
-				'https://i.gifer.com/origin/15/159a9b30970ea896703410cf33bf96b5_w200.gif',
-				'https://64.media.tumblr.com/211a4c412969d76d15b7795c479c7566/tumblr_n6g8s30HNc1sjd8gao1_500.gif',
-				'https://c.tenor.com/jhJp2A-K5HwAAAAd/gollum-leave-now.gif',
-				'https://c.tenor.com/hhXSacrSG2YAAAAM/gollum-lotr.gif',
-				'https://c.tenor.com/CMEj8VIJC34AAAAC/gollum-angry.gif',
-				'https://c.tenor.com/q7AIgBX-i4QAAAAC/sneaky-lordoftherings.gif'
-			]
-			bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id, {});
+  for (let j = 0; j < badStrings.length; j++) {
+  	  badStrings[j] = badStrings[j].toLowerCase();
+	  if (ctx.message.text.toString().toLowerCase().includes(badStrings[j])) {
+	  	console.log(`Match found: ${badStrings[j]}`);
+	    let gifArray =
+	      [
+	      'https://tenor.com/view/mad-argh-angry-rage-smeagol-gif-3556295',
+	      'https://i.gifer.com/origin/15/159a9b30970ea896703410cf33bf96b5_w200.gif',
+	      'https://64.media.tumblr.com/211a4c412969d76d15b7795c479c7566/tumblr_n6g8s30HNc1sjd8gao1_500.gif',
+	      'https://c.tenor.com/jhJp2A-K5HwAAAAd/gollum-leave-now.gif',
+	      'https://c.tenor.com/hhXSacrSG2YAAAAM/gollum-lotr.gif',
+	      'https://c.tenor.com/CMEj8VIJC34AAAAC/gollum-angry.gif',
+	      'https://c.tenor.com/q7AIgBX-i4QAAAAC/sneaky-lordoftherings.gif'
+	      ]
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id, {
+		})
 
-			//   **** this is the part where it would ban someone for spam and send a notification about it ****
-			/*
-			bot.telegram.kickChatMember(ctx.chat.id, ctx.message.from.id, {});
-			bot.telegram.sendMessage(-1563391102, `I just banned ${ctx.message.from.id}`);
-			*/
+//   **** this is the part where it would ban someone for spam and send a notification about it ****
+/*
+		bot.telegram.kickChatMember(ctx.chat.id, ctx.message.from.id, {});
+		bot.telegram.sendMessage(-1563391102, `I just banned ${ctx.message.from.id}`);
+*/
 
-			bot.telegram.sendChatAction(ctx.chat.id, action='typing');
-			setTimeout(function(){
-				ctx.replyWithMarkdown(gifArray[Math.floor(Math.random()*gifArray.length)]).then(
-				({ message_id }) => {
-					setTimeout(
-						() => ctx.deleteMessage(message_id),
-						10 * 1000)
-						// console.log(message_id)
-					})
-				}, 2000);
-				return;
-			}
-		}
+		bot.telegram.sendChatAction(ctx.chat.id, action='typing');
+		setTimeout(function(){
+			ctx.replyWithMarkdown(gifArray[Math.floor(Math.random()*gifArray.length)]).then(
+  	  		({ message_id }) => {
+	    	setTimeout(
+	    		() => ctx.deleteMessage(message_id),
+	    	    10 * 1000)
+	    	// console.log(message_id)
+	    	})
+		}, 2000);
+		return;
+	}
+  }
 
-		if ((!ctx.message.from.is_bot) && (filter.isProfane(ctx.message.text))){
-			bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id);
-			return bot.telegram.sendMessage(ctx.chat.id, `Filthy mouths won't be around long, precious. Master should be more careful. GOLLUM`);
-		}
+  if ((!ctx.message.from.is_bot) && (filter.isProfane(ctx.message.text))){
+	bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id);
+	return bot.telegram.sendMessage(ctx.chat.id, `Filthy mouths won't be around long, precious. Master should be more careful. GOLLUM`);
+  }
 
-		if (!fs.existsSync(`telegramHistory.txt`)) {
-			fs.writeFile(`telegramHistory.txt`, `Welcome to JRR Token!`, function (err) {
-				if (err) throw err;
-			})
-		}
+  if (!fs.existsSync(`telegramHistory.txt`)) {
+	fs.writeFile(`telegramHistory.txt`, `Welcome to JRR Token!`, function (err) {
+	  if (err) throw err;
+	})
+  }
 
-		var randomFuckery = Math.ceil(Math.random()*50);
-		if (!ctx.message.from.is_bot) {
-			fs.appendFile(`telegramHistory.txt`, `\n${ctx.message.text}`, function (err) {
-				if (err) throw err;
-			});
-		}
+  var randomFuckery = Math.ceil(Math.random()*50);
+	if (!ctx.message.from.is_bot) {
+	  fs.appendFile(`telegramHistory.txt`, `\n${ctx.message.text}`, function (err) {
+		if (err) throw err;
+	  });
+	}
 
-		if ((ctx.message.text.toString().toLowerCase().includes('smeagol') || ctx.message.text.toString().toLowerCase().includes('smeags') || ctx.message.text.toString().toLowerCase().includes('gollum')) && (ctx.message.text.toString().toLowerCase().includes('love you')) ||ctx.message.text.toString().toLowerCase().includes('love ya')) {
-			bot.telegram.sendChatAction(ctx.chat.id, action='typing');
-			setTimeout(function(){
-				bot.telegram.sendMessage(ctx.chat.id, 'https://c.tenor.com/j6aYNh_8znYAAAAM/nobody-likes-you-gollum.gif', {
-				}, 2000);
-			})
-		} else if (ctx.message.text.toString().toLowerCase().includes('smeagol') || ctx.message.text.toString().toLowerCase().includes('gollum') || randomFuckery == 10) {
-			bot.telegram.sendChatAction(ctx.chat.id, action='typing');
-			// Markov chain goes here
-			let words = ctx.message.text.split(' ');
-			if (words[1]) {
-				var startWord = words[Math.floor(Math.random()*words.length)];
-				var phraseLength = (Math.ceil(Math.random()*((words.length + 10)*2)));
-			} else {
-				var startWord = ctx.message.from.first_name;
-				var phraseLength = Math.ceil(Math.random()*20);
-			}
-			wordSalad = new MarkovChain(fs.readFileSync(`./telegramHistory.txt`, 'utf8'))
-			var phrase = wordSalad.start(startWord).end(phraseLength).process();
-			var firstLetter = phrase.slice(0, 1);
-			firstLetter = firstLetter.toUpperCase();
-			var restOfPhrase = phrase.slice(1, phrase.length);
-			phrase = firstLetter + restOfPhrase;
-			while (phrase.endsWith('?') || phrase.endsWith('.') || phrase.endsWith('!') || phrase.endsWith('"') || phrase.endsWith(',')) {
-				phrase = phrase.slice(0, -1)
-			}
-			while (phrase.includes('@')) {
-				phrase.replace('@', '');
-			}
-			setTimeout(function(){
-				bot.telegram.sendMessage(ctx.chat.id, phrase+'.');
-			}, 2500);
-		}
+  if ((ctx.message.text.toString().toLowerCase().includes('smeagol') || ctx.message.text.toString().toLowerCase().includes('smeags') || ctx.message.text.toString().toLowerCase().includes('gollum')) && (ctx.message.text.toString().toLowerCase().includes('love you')) ||ctx.message.text.toString().toLowerCase().includes('love ya')) {
+	bot.telegram.sendChatAction(ctx.chat.id, action='typing');
+  	setTimeout(function(){
+		bot.telegram.sendMessage(ctx.chat.id, 'https://c.tenor.com/j6aYNh_8znYAAAAM/nobody-likes-you-gollum.gif', {
+  		}, 2000);
+  	})
+  } else if (ctx.message.text.toString().toLowerCase().includes('smeagol') || ctx.message.text.toString().toLowerCase().includes('gollum') || randomFuckery == 10) {
+  	  bot.telegram.sendChatAction(ctx.chat.id, action='typing');
+    // Markov chain goes here
+      let words = ctx.message.text.split(' ');
+      if (words[1]) {
+        var startWord = words[Math.floor(Math.random()*words.length)];
+        var phraseLength = (Math.ceil(Math.random()*((words.length + 10)*2)));
+      } else {
+        var startWord = ctx.message.from.first_name;
+        var phraseLength = Math.ceil(Math.random()*20);
+      }
+    var wordSalad = new MarkovChain(fs.readFileSync(`./telegramHistory.txt`, 'utf8'))
+    var phrase = wordSalad.start(startWord).end(phraseLength).process();
+    var firstLetter = phrase.slice(0, 1);
+    firstLetter = firstLetter.toUpperCase();
+    var restOfPhrase = phrase.slice(1, phrase.length);
+    phrase = firstLetter + restOfPhrase;
+    while (phrase.endsWith('?') || phrase.endsWith('.') || phrase.endsWith('!') || phrase.endsWith('"') || phrase.endsWith(',')) {
+      phrase = phrase.slice(0, -1)
+    }
+    while (phrase.includes('@')) {
+      phrase.replace('@', '');
+    }
+    setTimeout(function(){
+    	bot.telegram.sendMessage(ctx.chat.id, phrase+'.');
+    }, 2500);
+  }
+});
+
+bot.on('new_chat_members', (ctx) => {
+  let keyboardArray = [['🧝‍♀️', 'ShallNotPass'], ['🏰', 'ShallNotPass'], ['🧙', 'Pass'], ['🐉', 'ShallNotPass'], ['💍', 'ShallNotPass']];
+  shuffle(keyboardArray);
+  newMember = ctx.message.new_chat_members[0].id;
+  newMemberName = ctx.message.new_chat_members[0].first_name;
+  console.log(`Restricting permissions for new user ${newMember}`);
+  bot.telegram.restrictChatMember(ctx.chat.id, newMember);
+  const keyboard = Keyboard.make([
+    Key.callback(keyboardArray[0][0], keyboardArray[0][1]),
+    Key.callback(keyboardArray[1][0], keyboardArray[1][1]),
+    Key.callback(keyboardArray[2][0], keyboardArray[2][1]),
+    Key.callback(keyboardArray[3][0], keyboardArray[3][1]),
+    Key.callback(keyboardArray[4][0], keyboardArray[4][1]),
+  ]).inline();
+	bot.telegram.sendMessage(ctx.chat.id, `Hello, Tokenite ${newMemberName}!\nYou shall not pass until you select 🧙`, keyboard).then(
+        ({ message_id }) => { smeagolBlocker = message_id; console.log(message_id)});
+});
+
+bot.on("callback_query", function(callbackQuery) {
+  let chatID = callbackQuery.update.callback_query.message.chat.id;
+  // 'callbackQuery' is of type CallbackQuery
+  if (callbackQuery.update.callback_query.data == "Pass") {
+    console.log(`Grant permissions to post to member ${newMember} and delete message ${smeagolBlocker}`);
+    bot.telegram.deleteMessage(chatID, smeagolBlocker);
+    bot.telegram.restrictChatMember(chatID, newMember, {"can_send_messages": true, "can_send_media_messages": true, "can_send_other_messages": true, "can_add_web_page_previews": true});
+    bot.telegram.sendMessage(chatID, `${newMemberName}, you have passed the test. Welcome! Some helpful tips for while you are here:\n\n/contract will show you the contract address\n\n/website will link you to the JRR Token website\n\n/guide will show you how to buy JRR\n\n/chart will link you to the latest JRR price chart`)
+  }
+  if (callbackQuery.update.callback_query.data == "ShallNotPass") {
+    console.log(`Ban user ${newMember} and delete message ${smeagolBlocker}`);
+    bot.telegram.kickChatMember(chatID, newMember).then((result) => console.log(result));
+    bot.telegram.deleteMessage(chatID, smeagolBlocker);
+  }
 });
 
 bot.launch();
