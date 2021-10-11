@@ -13,12 +13,12 @@ const db = new SQLite('../userinputs.sqlite');
 const puppeteer = require('puppeteer-core');
 */
 
-// ------- Initiate variables and a shuffle function for our Spam Blocker ----------
+// ------- Beginning of initialization code for spam blocker ----------
 
 var smeagolBlocker;
 var newMember;
 var newMemberName;
-var joinMessage;
+var correctResponse;
 
 const { Keyboard, Key } = require('telegram-keyboard')
 
@@ -40,7 +40,8 @@ function shuffle(array) {
   return array;
 }
 
-// --------- End of new code for spam blocker -----------
+
+// --------- End of initialization code for spam blocker -----------
 
 bot.telegram.getMe().then((botInfo) => {
 	bot.options.username = botInfo.username
@@ -284,9 +285,18 @@ bot.on('text', ctx => {
 });
 
 bot.on('new_chat_members', async (ctx) => {
-	await ctx.deleteMessage();
-  let keyboardArray = [['🧝‍♀️', 'ShallNotPass'], ['🏰', 'ShallNotPass'], ['🧙', 'Pass'], ['🐉', 'ShallNotPass'], ['💍', 'ShallNotPass']];
+  await ctx.deleteMessage();
+  let keyboardArray = [['🧝‍♀️', ''], ['🏰', ''], ['🧙', ''], ['🐉', ''], ['💍', '']];
   shuffle(keyboardArray);
+  correctResponse = Math.floor(Math.random() * keyboardArray.length);
+//  keyboardArray[correctResponse][1] = 'Pass';
+  for (let k = 0; k < keyboardArray.length; k++) {
+    if (k != correctResponse){
+      keyboardArray[k][1] = 'ShallNotPass';
+    } else {
+      keyboardArray[k][1] = 'Pass';
+    }
+  }
   newMember = ctx.message.new_chat_members[0].id;
   newMemberName = ctx.message.new_chat_members[0].first_name;
   console.log(`Restricting permissions for new user ${newMember}`);
@@ -298,10 +308,9 @@ bot.on('new_chat_members', async (ctx) => {
     Key.callback(keyboardArray[3][0], keyboardArray[3][1]),
     Key.callback(keyboardArray[4][0], keyboardArray[4][1]),
   ]).inline();
-	bot.telegram.sendMessage(ctx.chat.id, `Hello, Tokenite ${newMemberName}!\nYou shall not pass until you select 🧙`, keyboard).then(
+  bot.telegram.sendMessage(ctx.chat.id, `Hello, Tokenite ${newMemberName}!\nYou shall not pass until you select ${keyboardArray[correctResponse][0]}`, keyboard).then(
         ({ message_id }) => {
 					smeagolBlocker = message_id;
-					joinMessage = message_id - 1;
 				});
 });
 
@@ -309,13 +318,11 @@ bot.on("callback_query", function(callbackQuery) {
   let chatID = callbackQuery.update.callback_query.message.chat.id;
   // 'callbackQuery' is of type CallbackQuery
   if (callbackQuery.update.callback_query.data == "Pass") {
-    console.log(`Grant permissions to post to member ${newMember} and delete message ${smeagolBlocker}`);
     bot.telegram.deleteMessage(chatID, smeagolBlocker);
     bot.telegram.restrictChatMember(chatID, newMember, {"can_send_messages": true, "can_send_media_messages": true, "can_send_other_messages": true, "can_add_web_page_previews": true});
     bot.telegram.sendMessage(chatID, `${newMemberName}, you have passed the test. Welcome! Some helpful tips for while you are here:\n\n/contract will show you the contract address\n\n/website will link you to the JRR Token website\n\n/guide will show you how to buy JRR\n\n/chart will link you to the latest JRR price chart`)
   }
   if (callbackQuery.update.callback_query.data == "ShallNotPass") {
-    console.log(`Ban user ${newMember} and delete message ${smeagolBlocker}`);
     bot.telegram.kickChatMember(chatID, newMember).then((result) => console.log(result));
     bot.telegram.deleteMessage(chatID, smeagolBlocker);
   }
