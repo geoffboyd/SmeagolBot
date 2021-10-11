@@ -18,6 +18,7 @@ const puppeteer = require('puppeteer-core');
 var smeagolBlocker;
 var newMember;
 var newMemberName;
+var joinMessage;
 
 const { Keyboard, Key } = require('telegram-keyboard')
 
@@ -282,7 +283,8 @@ bot.on('text', ctx => {
   }
 });
 
-bot.on('new_chat_members', (ctx) => {
+bot.on('new_chat_members', async (ctx) => {
+	await ctx.deleteMessage();
   let keyboardArray = [['🧝‍♀️', 'ShallNotPass'], ['🏰', 'ShallNotPass'], ['🧙', 'Pass'], ['🐉', 'ShallNotPass'], ['💍', 'ShallNotPass']];
   shuffle(keyboardArray);
   newMember = ctx.message.new_chat_members[0].id;
@@ -297,7 +299,10 @@ bot.on('new_chat_members', (ctx) => {
     Key.callback(keyboardArray[4][0], keyboardArray[4][1]),
   ]).inline();
 	bot.telegram.sendMessage(ctx.chat.id, `Hello, Tokenite ${newMemberName}!\nYou shall not pass until you select 🧙`, keyboard).then(
-        ({ message_id }) => { smeagolBlocker = message_id; console.log(message_id)});
+        ({ message_id }) => {
+					smeagolBlocker = message_id;
+					joinMessage = message_id - 1;
+				});
 });
 
 bot.on("callback_query", function(callbackQuery) {
@@ -314,6 +319,10 @@ bot.on("callback_query", function(callbackQuery) {
     bot.telegram.kickChatMember(chatID, newMember).then((result) => console.log(result));
     bot.telegram.deleteMessage(chatID, smeagolBlocker);
   }
+});
+
+bot.on("left_chat_member", ctx => {
+  bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id);
 });
 
 bot.launch();
