@@ -15,10 +15,9 @@ const puppeteer = require('puppeteer-core');
 
 // ------- Beginning of initialization code for spam blocker ----------
 
-var smeagolBlocker;
-var newMember;
-var newMemberName;
-var correctResponse;
+let smeagolBlocker;
+let newMember;
+let newMemberName;
 
 const { Keyboard, Key } = require('telegram-keyboard')
 
@@ -26,7 +25,7 @@ bot.telegram.getMe().then((botInfo) => {
   bot.options.username = botInfo.username
 })
 
-function shuffle(array) {
+function shuffle(array) {             // this function was straight up lifted from the internet. it is a standard shuffling algorithm
   let currentIndex = array.length, randomIndex;
   // While there remain elements to shuffle...
   while (currentIndex != 0) {
@@ -39,7 +38,6 @@ function shuffle(array) {
   }
   return array;
 }
-
 
 // --------- End of initialization code for spam blocker -----------
 
@@ -208,8 +206,7 @@ bot.on('text', ctx => {
 	      'https://c.tenor.com/CMEj8VIJC34AAAAC/gollum-angry.gif',
 	      'https://c.tenor.com/q7AIgBX-i4QAAAAC/sneaky-lordoftherings.gif'
 	      ]
-		bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id, {
-		})
+		  bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id, {});
 
 //   **** this is the part where it would ban someone for spam and send a notification about it ****
 /*
@@ -217,18 +214,16 @@ bot.on('text', ctx => {
 		bot.telegram.sendMessage(-1563391102, `I just banned ${ctx.message.from.id}`);
 */
 
-		bot.telegram.sendChatAction(ctx.chat.id, action='typing');
-		setTimeout(function(){
-			ctx.replyWithMarkdown(gifArray[Math.floor(Math.random()*gifArray.length)]).then(
+		  bot.telegram.sendChatAction(ctx.chat.id, action='typing');
+		  setTimeout(function(){
+			   ctx.replyWithMarkdown(gifArray[Math.floor(Math.random()*gifArray.length)]).then(
   	  		({ message_id }) => {
-	    	setTimeout(
-	    		() => ctx.deleteMessage(message_id),
-	    	    10 * 1000)
-	    	// console.log(message_id)
-	    	})
-		}, 2000);
-		return;
-	}
+	    	    setTimeout(
+	    		    () => ctx.deleteMessage(message_id), 10 * 1000)
+	    	  })
+		   }, 2000);
+		    return;
+	   }
   }
 
   if ((!ctx.message.from.is_bot) && (filter.isProfane(ctx.message.text))){
@@ -287,9 +282,10 @@ bot.on('text', ctx => {
 bot.on('new_chat_members', async (ctx) => {
   await ctx.deleteMessage();
   let keyboardArray = [['🧝‍♀️', ''], ['🏰', ''], ['🧙', ''], ['🐉', ''], ['💍', '']];
+  let correctResponse = Math.floor(Math.random() * keyboardArray.length);
+  let keyPairItem;
+  let keyPairArray = [];
   shuffle(keyboardArray);
-  correctResponse = Math.floor(Math.random() * keyboardArray.length);
-//  keyboardArray[correctResponse][1] = 'Pass';
   for (let k = 0; k < keyboardArray.length; k++) {
     if (k != correctResponse){
       keyboardArray[k][1] = 'ShallNotPass';
@@ -301,13 +297,13 @@ bot.on('new_chat_members', async (ctx) => {
   newMemberName = ctx.message.new_chat_members[0].first_name;
   console.log(`Restricting permissions for new user ${newMember}`);
   bot.telegram.restrictChatMember(ctx.chat.id, newMember);
-  const keyboard = Keyboard.make([
-    Key.callback(keyboardArray[0][0], keyboardArray[0][1]),
-    Key.callback(keyboardArray[1][0], keyboardArray[1][1]),
-    Key.callback(keyboardArray[2][0], keyboardArray[2][1]),
-    Key.callback(keyboardArray[3][0], keyboardArray[3][1]),
-    Key.callback(keyboardArray[4][0], keyboardArray[4][1]),
-  ]).inline();
+
+  for (let l = 0; l < keyboardArray.length; l++) {
+    eval("keyPairItem = Key.callback(keyboardArray[l][0], keyboardArray[l][1])");
+    keyPairArray.push(keyPairItem);
+  }
+  let keyboard = Keyboard.make(keyPairArray).inline();
+
   bot.telegram.sendMessage(ctx.chat.id, `Hello, Tokenite ${newMemberName}!\nYou shall not pass until you select ${keyboardArray[correctResponse][0]}`, keyboard).then(
         ({ message_id }) => {
 					smeagolBlocker = message_id;
